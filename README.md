@@ -128,7 +128,153 @@ GET    /api/projects/[id]/export/pdf
 
 ---
 
-## 📁 Project Structure
+## � Database Schema
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                    ORGANIZATIONS (Multi-tenancy)                 │
+├──────────────────────────────────────────────────────────────────┤
+│ • id (UUID)              • name (String)                          │
+│ • type (enum)            • state, district (String)               │
+│ • createdAt, updatedAt   • One-to-Many: Users, Projects          │
+└──────────────────────────────────────────────────────────────────┘
+                           │
+                ┌──────────┴──────────┐
+                ▼                     ▼
+┌─────────────────────────┐  ┌──────────────────────────┐
+│        USERS            │  │     LFA_PROJECTS         │
+├─────────────────────────┤  ├──────────────────────────┤
+│ • id (UUID)             │  │ • id (UUID)              │
+│ • email (unique)        │  │ • title, description     │
+│ • password (hashed)     │  │ • theme (FLN, TPQA...)   │
+│ • name                  │  │ • status (DRAFT, ACTIVE) │
+│ • role (DESIGNER)       │  │ • compilationPercentage  │
+│ • gamificationPoints    │  │ • geography              │
+│ • organizationId (FK)   │  │ • organizationId (FK)    │
+│ • createdAt, updatedAt  │  │ • created_by_id (FK)     │
+└─────────────────────────┘  │ • createdAt, updatedAt   │
+                             └──────────────────────────┘
+                                        │
+                ┌───────────────────────┼───────────────────────┐
+                ▼                       ▼                       ▼
+    ┌──────────────────────┐  ┌──────────────────┐  ┌──────────────────┐
+    │     OBJECTIVES       │  │   LFA_COMPONENTS │  │    INDICATORS    │
+    ├──────────────────────┤  ├──────────────────┤  ├──────────────────┤
+    │ • id                 │  │ • id             │  │ • id             │
+    │ • projectId (FK)     │  │ • projectId(FK)  │  │ • projectId (FK) │
+    │ • content            │  │ • componentType  │  │ • name           │
+    │ • definition         │  │ • content        │  │ • definition     │
+    │ • createdAt          │  │ • version        │  │ • indicatorType  │
+    │ • updatedAt          │  │ • is_complete    │  │ • measurement    │
+    └──────────────────────┘  │ • createdAt      │  │ • frequency      │
+                              │ • updatedAt      │  │ • dataSource     │
+                              └──────────────────┘  │ • baseline       │
+                                                    │ • targetValue    │
+    ┌──────────────────────┐  ┌──────────────────┐  └──────────────────┘
+    │    OUTCOMES          │  │   ACTIVITIES     │
+    ├──────────────────────┤  ├──────────────────┤
+    │ • id                 │  │ • id             │
+    │ • projectId (FK)     │  │ • projectId (FK) │
+    │ • level (Student,    │  │ • name           │
+    │   System, Long-term) │  │ • description    │
+    │ • statement          │  │ • sequence       │
+    │ • linkedIndicators   │  │ • resources      │
+    │ • createdAt          │  │ • createdAt      │
+    └──────────────────────┘  │ • updatedAt      │
+                              └──────────────────┘
+
+┌──────────────────────────┐  ┌──────────────────────┐
+│    PADDING_LIBRARY       │  │   USER_BADGES        │
+├──────────────────────────┤  ├──────────────────────┤
+│ • id                     │  │ • id                 │
+│ • theme                  │  │ • userId (FK)        │
+│ • pattern_type           │  │ • badge_id           │
+│ • pattern_value          │  │ • earned_at          │
+├──────────────────────────┤  │ • description        │
+│ Pre-filled templates for │  ├──────────────────────┤
+│ program designers        │  │ Gamification system  │
+└──────────────────────────┘  └──────────────────────┘
+
+┌──────────────────────────┐
+│     QUEST_PROGRESS       │
+├──────────────────────────┤
+│ • id                     │
+│ • userId (FK)            │
+│ • projectId (FK)         │
+│ • currentLevel (1-5)     │
+│ • currentQuest           │
+│ • completedQuests        │
+│ • completedLevels        │
+│ • updatedAt              │
+└──────────────────────────┘
+```
+
+### Table Details
+
+**ORGANIZATIONS**
+- `id`: UUID primary key
+- `name`: Organization name
+- `type`: NGO | CSO | GOVERNMENT | FUNDER | OTHER
+- `state`, `district`: Geographic info
+- One org has many users and projects
+
+**USERS**
+- `id`: UUID primary key
+- `email`: Unique identifier, used for login
+- `password`: Bcrypt hashed (min 8 chars)
+- `name`: Full name
+- `role`: DESIGNER (default)
+- `gamificationPoints`: Points earned from quests
+- `organizationId`: Foreign key to ORGANIZATIONS
+
+**LFA_PROJECTS**
+- `id`: UUID primary key
+- `title`: Project name
+- `theme`: Education focus (FLN, TPQA, Leadership, etc.)
+- `status`: DRAFT | IN_PROGRESS | COMPLETED
+- `compilationPercentage`: Completion %
+- `organizationId`: Belongs to organization
+- `created_by_id`: User who created
+
+**OBJECTIVES** (Problem statement)
+- Defines core problem
+- What needs to change
+- Why it's important
+
+**OUTCOMES** (Results)
+- `level`: STUDENT | SYSTEM | LONG_TERM
+- Student outcomes → System change → Impact
+
+**ACTIVITIES** (What we do)
+- Specific interventions
+- Implementation steps
+- Resource requirements
+
+**INDICATORS** (How we measure)
+- `indicatorType`: OUTCOME | OUTPUT | PROCESS
+- `measurement_method`: How measured
+- `frequency`: Daily, Weekly, Monthly, etc.
+- `baseline`: Starting value
+- `targetValue`: Goal value
+
+**LFA_COMPONENTS** (Template items)
+- Pre-defined framework components
+- Questions guiding designers
+- Validation rules
+
+**PADDING_LIBRARY** (AI helpers)
+- Template suggestions
+- Example programs
+- Best practice patterns
+
+**USER_BADGES** (Gamification)
+- Badges earned (Novice, Expert, etc.)
+- Points tracked
+- Level progression
+
+---
+
+## �📁 Project Structure
 
 ```
 src/
