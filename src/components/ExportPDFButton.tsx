@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { Download, FileText, Loader2 } from "lucide-react";
-import { Button } from "@/components/ui/Button";
+import { Button } from "@/components/ui/button";
 import { generateLFAPDF, downloadPDF, type ExportOptions } from "@/lib/pdf-export";
 
 interface ExportPDFButtonProps {
