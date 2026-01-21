@@ -82,6 +82,11 @@ export async function createTraceWrapper<T, R>(
       },
     });
 
+    if (!run) {
+      // Fallback if run creation fails
+      return asyncFn(input);
+    }
+
     try {
       const output = await asyncFn(input);
 
@@ -184,10 +189,15 @@ export async function createBatchTrace<T>(
     },
   });
 
+  if (!batchRun) {
+    // Fallback if batch run creation fails
+    return Promise.all(agentCalls.map((call) => call.fn()));
+  }
+
   try {
     const results = await Promise.all(
       agentCalls.map(async (call) => {
-        const agentRun = await langsmithClient.createRun({
+        const agentRun = await langsmithClient!.createRun({
           name: call.name,
           run_type: "chain",
           inputs: {},
@@ -195,15 +205,19 @@ export async function createBatchTrace<T>(
           parent_run_id: batchRun.id,
         });
 
+        if (!agentRun) {
+          return call.fn();
+        }
+
         try {
           const result = await call.fn();
-          await langsmithClient.updateRun(agentRun.id, {
+          await langsmithClient!.updateRun(agentRun.id, {
             outputs: { result },
             end_time: Date.now(),
           });
           return result;
         } catch (error) {
-          await langsmithClient.updateRun(agentRun.id, {
+          await langsmithClient!.updateRun(agentRun.id, {
             error: String(error),
             end_time: Date.now(),
           });
