@@ -9,7 +9,7 @@ interface ExportPDFButtonProps {
   projectId: string;
   projectTitle: string;
   variant?: "default" | "ghost" | "outline";
-  size?: "sm" | "md" | "lg";
+  size?: "default" | "sm" | "lg" | "xl" | "icon";
   showIcon?: boolean;
   className?: string;
 }
@@ -18,7 +18,7 @@ export function ExportPDFButton({
   projectId,
   projectTitle,
   variant = "default",
-  size = "md",
+  size = "default",
   showIcon = true,
   className = "",
 }: ExportPDFButtonProps) {
