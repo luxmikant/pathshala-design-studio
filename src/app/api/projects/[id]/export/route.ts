@@ -27,7 +27,7 @@ export async function GET(
           select: { name: true },
         },
         components: {
-          orderBy: [{ questLevel: "asc" }, { questNumber: "asc" }],
+          // orderBy: [{ questLevel: "asc" }, { questNumber: "asc" }],
         },
       },
     });
