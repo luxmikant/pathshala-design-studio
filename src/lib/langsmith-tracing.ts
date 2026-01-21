@@ -12,6 +12,7 @@
  */
 
 import { Client } from "langsmith";
+import { v4 as uuidv4 } from "uuid";
 
 // Initialize LangSmith client (reads LANGCHAIN_API_KEY from env)
 // Temporarily disabled due to API compatibility issues
@@ -71,18 +72,20 @@ export async function createTraceWrapper<T, R>(
       return asyncFn(input);
     }
 
-    const run = await langsmithClient.createRun({
-      name: agentName,
-      run_type: "chain",
-      inputs: { input },
-      project_name: TRACING_CONFIG.projectName,
-      // tags: [TRACING_CONFIG.tags.MULTIAGENT, ...tags], // Temporarily disabled
-      extra: {
-        timestamp: new Date().toISOString(),
-      },
-    });
-
-    if (!run) {
+    const runId = uuidv4();
+    try {
+      await langsmithClient.createRun({
+        id: runId,
+        name: agentName,
+        run_type: "chain",
+        inputs: { input },
+        project_name: TRACING_CONFIG.projectName,
+        // tags: [TRACING_CONFIG.tags.MULTIAGENT, ...tags], // Temporarily disabled
+        extra: {
+          timestamp: new Date().toISOString(),
+        },
+      });
+    } catch (e) {
       // Fallback if run creation fails
       return asyncFn(input);
     }
@@ -91,7 +94,7 @@ export async function createTraceWrapper<T, R>(
       const output = await asyncFn(input);
 
       // Update run with successful output
-      await langsmithClient.updateRun(run.id, {
+      await langsmithClient.updateRun(runId, {
         outputs: { output },
         end_time: Date.now(),
       });
@@ -99,7 +102,7 @@ export async function createTraceWrapper<T, R>(
       return output;
     } catch (error) {
       // Capture error in trace
-      await langsmithClient.updateRun(run.id, {
+      await langsmithClient.updateRun(runId, {
         error: String(error),
         end_time: Date.now(),
       });
@@ -179,17 +182,19 @@ export async function createBatchTrace<T>(
     return Promise.all(agentCalls.map((call) => call.fn()));
   }
 
-  const batchRun = await langsmithClient.createRun({
-    name: orchestratorName,
-    run_type: "chain",
-    project_name: TRACING_CONFIG.projectName,
-    // tags: [TRACING_CONFIG.tags.MULTIAGENT], // Temporarily disabled
-    inputs: {
-      agents: agentCalls.map((c) => c.name),
-    },
-  });
-
-  if (!batchRun) {
+  const batchRunId = uuidv4();
+  try {
+    await langsmithClient.createRun({
+      id: batchRunId,
+      name: orchestratorName,
+      run_type: "chain",
+      project_name: TRACING_CONFIG.projectName,
+      // tags: [TRACING_CONFIG.tags.MULTIAGENT], // Temporarily disabled
+      inputs: {
+        agents: agentCalls.map((c) => c.name),
+      },
+    });
+  } catch (e) {
     // Fallback if batch run creation fails
     return Promise.all(agentCalls.map((call) => call.fn()));
   }
@@ -197,27 +202,29 @@ export async function createBatchTrace<T>(
   try {
     const results = await Promise.all(
       agentCalls.map(async (call) => {
-        const agentRun = await langsmithClient!.createRun({
-          name: call.name,
-          run_type: "chain",
-          inputs: {},
-          project_name: TRACING_CONFIG.projectName,
-          parent_run_id: batchRun.id,
-        });
-
-        if (!agentRun) {
+        const agentRunId = uuidv4();
+        try {
+          await langsmithClient!.createRun({
+            id: agentRunId,
+            name: call.name,
+            run_type: "chain",
+            inputs: {},
+            project_name: TRACING_CONFIG.projectName,
+            parent_run_id: batchRunId,
+          });
+        } catch (e) {
           return call.fn();
         }
 
         try {
           const result = await call.fn();
-          await langsmithClient!.updateRun(agentRun.id, {
+          await langsmithClient!.updateRun(agentRunId, {
             outputs: { result },
             end_time: Date.now(),
           });
           return result;
         } catch (error) {
-          await langsmithClient!.updateRun(agentRun.id, {
+          await langsmithClient!.updateRun(agentRunId, {
             error: String(error),
             end_time: Date.now(),
           });
@@ -226,14 +233,14 @@ export async function createBatchTrace<T>(
       })
     );
 
-    await langsmithClient.updateRun(batchRun.id, {
+    await langsmithClient.updateRun(batchRunId, {
       outputs: { results },
       end_time: Date.now(),
     });
 
     return results;
   } catch (error) {
-    await langsmithClient.updateRun(batchRun.id, {
+    await langsmithClient.updateRun(batchRunId, {
       error: String(error),
       end_time: Date.now(),
     });
