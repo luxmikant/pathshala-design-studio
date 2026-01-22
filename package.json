@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@auth/prisma-adapter": "^2.11.1",
+    "@eslint/eslintrc": "^3.3.3",
     "@hookform/resolvers": "^5.2.2",
     "@langchain/core": "^1.1.15",
     "@langchain/groq": "^1.0.3",
@@ -42,7 +43,7 @@
     "langsmith": "^0.4.7",
     "lodash": "^4.17.21",
     "lucide-react": "^0.562.0",
-    "next": "15.3.2",
+    "next": "^15.5.9",
     "next-auth": "^4.24.13",
     "prisma": "^6.19.2",
     "react": "19.2.3",
