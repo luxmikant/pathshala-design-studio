@@ -51,18 +51,52 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    if (status === "unauthenticated") {
-      router.push("/auth/login");
-    }
+    // ⚠️ AUTH BYPASSED - Skip login redirect for frontend-only mode
+    // if (status === "unauthenticated") {
+    //   router.push("/auth/login");
+    // }
+    setIsLoading(false); // Set loading to false immediately
   }, [status, router]);
 
   useEffect(() => {
-    if (session?.user) {
-      fetchProjects();
-    }
-  }, [session]);
+    // ⚠️ DATABASE BYPASSED - Don't fetch projects due to DB connection issues
+    // Mock data for frontend demonstration
+    setProjects([
+      {
+        id: "demo-1",
+        title: "Sample FLN Journey",
+        theme: "FLN",
+        status: "IN_PROGRESS",
+        completionPercentage: 45,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        progress: {
+          currentLevel: 2,
+          currentQuest: 3,
+          streakDays: 5,
+        },
+      },
+      {
+        id: "demo-2",
+        title: "Career Readiness Program",
+        theme: "CAREER_READINESS",
+        status: "DRAFT",
+        completionPercentage: 10,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+        progress: {
+          currentLevel: 1,
+          currentQuest: 1,
+          streakDays: 1,
+        },
+      },
+    ]);
+    setIsLoading(false);
+  }, []);
 
   const fetchProjects = async () => {
+    // ⚠️ DISABLED - Database not accessible
+    /* ORIGINAL CODE:
     try {
       const response = await fetch("/api/projects");
       const data = await response.json();
@@ -74,6 +108,7 @@ export default function DashboardPage() {
     } finally {
       setIsLoading(false);
     }
+    */
   };
 
   if (status === "loading" || isLoading) {

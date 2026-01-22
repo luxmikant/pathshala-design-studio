@@ -9,6 +9,13 @@ const protectedPaths = ["/dashboard", "/projects"];
 const authPaths = ["/auth/login", "/auth/register"];
 
 export async function middleware(request: NextRequest) {
+  // ⚠️ AUTHENTICATION BYPASSED FOR DEPLOYMENT - FRONTEND ONLY MODE
+  // Database connection issues prevent auth from working
+  // All routes are now accessible without authentication
+  
+  return NextResponse.next();
+  
+  /* ORIGINAL AUTH CODE - COMMENTED OUT FOR DEPLOYMENT
   const { pathname } = request.nextUrl;
 
   // Get the token from the request
@@ -38,6 +45,7 @@ export async function middleware(request: NextRequest) {
   }
 
   return NextResponse.next();
+  */
 }
 
 // Configure which paths the middleware runs on
