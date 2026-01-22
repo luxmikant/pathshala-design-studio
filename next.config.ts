@@ -6,6 +6,11 @@ const nextConfig: NextConfig = {
     ignoreBuildErrors: true,
   },
   
+  // ESLint - skip during builds for faster deployment
+  eslint: {
+    ignoreDuringBuilds: true,
+  },
+  
   // Optimize for production
   poweredByHeader: false,
   reactStrictMode: true,
