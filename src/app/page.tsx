@@ -40,7 +40,7 @@ export default function Home() {
           </p>
           <div className="flex gap-4 justify-center">
             <Link
-              href="/auth/register"
+              href="/dashboard"
               className="px-8 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold text-lg"
             >
               🚀 Start Your Journey
